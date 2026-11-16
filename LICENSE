@@ -1,15 +1,9 @@
-
----
-
-### ✅ 2. `LICENSE` — MIT с вашими данными
-
-```text
 MIT License
 
-Copyright (c) 2025 Москалев Виталий, РФ  
-Контакт: moskalevvitalii@mail.ru  
-Проект: whisper-audio-to-text  
-Сообщество: https://vk.com/hihichpock
+Copyright (c) 2025 Vitalii Moskalev (Москалев Виталий)
+Contact: moskalevvitalii@mail.ru
+Project: whisper-audio-to-text
+Community: https://vk.com/hihichpock
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
