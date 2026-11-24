@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-РўСЂР°РЅСЃРєСЂРёР±Р°С†РёСЏ РІРёРґРµРѕ/Р°СѓРґРёРѕ РІ СЃСѓР±С‚РёС‚СЂС‹ СЃ С‚Р°Р№РјРєРѕРґР°РјРё.
+Транскрибация видео/аудио в субтитры с таймкодами.
 
-РћСЃРЅРѕРІР°РЅРѕ РЅР° OpenAI Whisper. РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ openai-whisper,
-РµСЃР»Рё СѓСЃС‚Р°РЅРѕРІР»РµРЅ faster-whisper вЂ” РјРѕР¶РЅРѕ РІС‹Р±СЂР°С‚СЊ РµРіРѕ С‡РµСЂРµР· --backend faster.
+Основано на OpenAI Whisper. По умолчанию используется openai-whisper,
+если установлен faster-whisper — можно выбрать его через --backend faster.
 
-Р’С‹С…РѕРґ: SRT, VTT Рё JSON СЃ СЂРµРїР»РёРєР°РјРё. РџРѕ Р¶РµР»Р°РЅРёСЋ вЂ” РІРёРґРµРѕ СЃ РІР¶Р°С‚С‹РјРё СЃСѓР±С‚РёС‚СЂР°РјРё.
+Выход: SRT, VTT и JSON с репликами. По желанию — видео с вжатыми субтитрами.
 """
 
 from __future__ import annotations
@@ -54,8 +54,8 @@ def find_ffmpeg(explicit: Optional[str] = None) -> str:
         if candidate and os.path.isfile(candidate):
             return candidate
     raise RuntimeError(
-        "ffmpeg РЅРµ РЅР°Р№РґРµРЅ. РџРѕР»РѕР¶РёС‚Рµ ffmpeg.exe СЂСЏРґРѕРј СЃРѕ СЃРєСЂРёРїС‚РѕРј, "
-        "СѓРєР°Р¶РёС‚Рµ --ffmpeg РїСѓС‚СЊ/Рє/ffmpeg РёР»Рё РґРѕР±Р°РІСЊС‚Рµ ffmpeg РІ PATH."
+        "ffmpeg не найден. Положите ffmpeg.exe рядом со скриптом, "
+        "укажите --ffmpeg путь/к/ffmpeg или добавьте ffmpeg в PATH."
     )
 
 
@@ -72,7 +72,7 @@ def run_command(command: Sequence[str], cwd: Optional[str] = None) -> None:
     if process.returncode != 0:
         tail = (process.stderr or "").strip().splitlines()[-12:]
         raise RuntimeError(
-            "РљРѕРјР°РЅРґР° Р·Р°РІРµСЂС€РёР»Р°СЃСЊ СЃ РѕС€РёР±РєРѕР№:\n"
+            "Команда завершилась с ошибкой:\n"
             + " ".join(command)
             + "\n"
             + "\n".join(tail)
@@ -138,7 +138,7 @@ def transcribe_faster(
         from faster_whisper import WhisperModel  # type: ignore
     except ImportError as exc:
         raise RuntimeError(
-            "faster-whisper РЅРµ СѓСЃС‚Р°РЅРѕРІР»РµРЅ. РЈСЃС‚Р°РЅРѕРІРёС‚Рµ: pip install faster-whisper"
+            "faster-whisper не установлен. Установите: pip install faster-whisper"
         ) from exc
 
     model = WhisperModel(model_size, device=device, compute_type=compute_type)
@@ -165,7 +165,7 @@ def transcribe_openai(
         import whisper  # type: ignore
     except ImportError as exc:
         raise RuntimeError(
-            "openai-whisper РЅРµ СѓСЃС‚Р°РЅРѕРІР»РµРЅ. РЈСЃС‚Р°РЅРѕРІРёС‚Рµ: pip install openai-whisper"
+            "openai-whisper не установлен. Установите: pip install openai-whisper"
         ) from exc
 
     model = whisper.load_model(model_size, device=device)
@@ -197,7 +197,7 @@ def _would_exceed_lines(words: Sequence[Word], max_line: int, max_lines: int) ->
 
 
 def _ends_sentence(text: str) -> bool:
-    return bool(re.search(r"[.!?вЂ¦]\s*$", text))
+    return bool(re.search(r"[.!?…]\s*$", text))
 
 
 def build_cues(
@@ -346,14 +346,14 @@ def burn_subtitles(
 
 def run_self_test() -> int:
     words = [
-        Word(0.0, 0.4, "РџСЂРёРІРµС‚,"),
-        Word(0.4, 0.9, "СЌС‚Рѕ"),
-        Word(0.9, 1.4, "РїСЂРѕРІРµСЂРєР°"),
-        Word(1.4, 1.8, "СЃСѓР±С‚РёС‚СЂРѕРІ."),
-        Word(3.2, 3.6, "Р’С‚РѕСЂР°СЏ"),
-        Word(3.6, 4.1, "СЂРµРїР»РёРєР°"),
-        Word(4.1, 4.6, "РїРѕСЃР»Рµ"),
-        Word(4.6, 5.0, "РїР°СѓР·С‹."),
+        Word(0.0, 0.4, "Привет,"),
+        Word(0.4, 0.9, "это"),
+        Word(0.9, 1.4, "проверка"),
+        Word(1.4, 1.8, "субтитров."),
+        Word(3.2, 3.6, "Вторая"),
+        Word(3.6, 4.1, "реплика"),
+        Word(4.1, 4.6, "после"),
+        Word(4.6, 5.0, "паузы."),
     ]
     cues = build_cues(words)
     print(to_srt(cues))
@@ -363,93 +363,93 @@ def run_self_test() -> int:
 
 def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Р Р°СЃРїРѕР·РЅР°С‚СЊ РІРёРґРµРѕ/Р°СѓРґРёРѕ Рё СЃРѕС…СЂР°РЅРёС‚СЊ СЃСѓР±С‚РёС‚СЂС‹ СЃ С‚Р°Р№РјРєРѕРґР°РјРё.",
+        description="Распознать видео/аудио и сохранить субтитры с таймкодами.",
     )
-    parser.add_argument("input", nargs="?", help="РІРёРґРµРѕ РёР»Рё Р°СѓРґРёРѕ С„Р°Р№Р»")
+    parser.add_argument("input", nargs="?", help="видео или аудио файл")
     parser.add_argument(
         "--model",
         default="small",
-        help="СЂР°Р·РјРµСЂ РјРѕРґРµР»Рё Whisper: tiny, base, small, medium, large, turbo (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ small)",
+        help="размер модели Whisper: tiny, base, small, medium, large, turbo (по умолчанию small)",
     )
     parser.add_argument(
         "--lang",
         default=None,
-        help="СЏР·С‹Рє: ru, en Рё С‚.Рґ. Р‘РµР· РїР°СЂР°РјРµС‚СЂР° вЂ” Р°РІС‚РѕРѕРїСЂРµРґРµР»РµРЅРёРµ",
+        help="язык: ru, en и т.д. Без параметра — автоопределение",
     )
     parser.add_argument(
         "--backend",
         choices=("auto", "faster", "openai"),
         default="auto",
-        help="РґРІРёР¶РѕРє СЂР°СЃРїРѕР·РЅР°РІР°РЅРёСЏ (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ auto)",
+        help="движок распознавания (по умолчанию auto)",
     )
     parser.add_argument(
         "--device",
         default="cpu",
-        help="cpu РёР»Рё cuda (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ cpu)",
+        help="cpu или cuda (по умолчанию cpu)",
     )
     parser.add_argument(
         "--compute-type",
         default="int8",
-        help="С‚РёРї РІС‹С‡РёСЃР»РµРЅРёР№ РґР»СЏ faster-whisper: int8, float16 Рё С‚.Рґ.",
+        help="тип вычислений для faster-whisper: int8, float16 и т.д.",
     )
     parser.add_argument(
         "--out-dir",
         default=None,
-        help="РїР°РїРєР° РґР»СЏ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ СЂСЏРґРѕРј СЃ РёСЃС…РѕРґРЅРёРєРѕРј)",
+        help="папка для результатов (по умолчанию рядом с исходником)",
     )
     parser.add_argument(
         "--formats",
         default="srt,vtt,json",
-        help="С„РѕСЂРјР°С‚С‹ С‡РµСЂРµР· Р·Р°РїСЏС‚СѓСЋ: srt,vtt,json (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РІСЃРµ)",
+        help="форматы через запятую: srt,vtt,json (по умолчанию все)",
     )
     parser.add_argument(
         "--burn",
         action="store_true",
-        help="РІР¶РµС‡СЊ СЃСѓР±С‚РёС‚СЂС‹ РІ РІРёРґРµРѕ",
+        help="вжечь субтитры в видео",
     )
     parser.add_argument(
         "--burn-out",
         default=None,
-        help="РёРјСЏ РІС‹С…РѕРґРЅРѕРіРѕ РІРёРґРµРѕ СЃ СЃСѓР±С‚РёС‚СЂР°РјРё",
+        help="имя выходного видео с субтитрами",
     )
     parser.add_argument(
         "--max-line",
         type=int,
         default=42,
-        help="РјР°РєСЃРёРјСѓРј СЃРёРјРІРѕР»РѕРІ РІ СЃС‚СЂРѕРєРµ СЃСѓР±С‚РёС‚СЂР° (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ 42)",
+        help="максимум символов в строке субтитра (по умолчанию 42)",
     )
     parser.add_argument(
         "--max-duration",
         type=float,
         default=6.0,
-        help="РјР°РєСЃРёРјР°Р»СЊРЅР°СЏ РґР»РёС‚РµР»СЊРЅРѕСЃС‚СЊ РѕРґРЅРѕР№ СЂРµРїР»РёРєРё, СЃРµРє (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ 6)",
+        help="максимальная длительность одной реплики, сек (по умолчанию 6)",
     )
     parser.add_argument(
         "--max-gap",
         type=float,
         default=0.9,
-        help="РїР°СѓР·Р°, РїРѕСЃР»Рµ РєРѕС‚РѕСЂРѕР№ РЅР°С‡РёРЅР°РµС‚СЃСЏ РЅРѕРІР°СЏ СЂРµРїР»РёРєР°, СЃРµРє (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ 0.9)",
+        help="пауза, после которой начинается новая реплика, сек (по умолчанию 0.9)",
     )
     parser.add_argument(
         "--min-duration",
         type=float,
         default=1.2,
-        help="РјРёРЅРёРјР°Р»СЊРЅР°СЏ РґР»РёС‚РµР»СЊРЅРѕСЃС‚СЊ СЂРµРїР»РёРєРё, СЃРµРє (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ 1.2)",
+        help="минимальная длительность реплики, сек (по умолчанию 1.2)",
     )
     parser.add_argument(
         "--ffmpeg",
         default=None,
-        help="РїСѓС‚СЊ Рє ffmpeg (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РёС‰РµС‚СЃСЏ СЂСЏРґРѕРј СЃРѕ СЃРєСЂРёРїС‚РѕРј РёР»Рё РІ PATH)",
+        help="путь к ffmpeg (по умолчанию ищется рядом со скриптом или в PATH)",
     )
     parser.add_argument(
         "--keep-audio",
         action="store_true",
-        help="РЅРµ СѓРґР°Р»СЏС‚СЊ РІСЂРµРјРµРЅРЅС‹Р№ WAV РїРѕСЃР»Рµ РѕР±СЂР°Р±РѕС‚РєРё",
+        help="не удалять временный WAV после обработки",
     )
     parser.add_argument(
         "--self-test",
         action="store_true",
-        help="РїСЂРѕРІРµСЂРёС‚СЊ СЃР±РѕСЂРєСѓ SRT/VTT Р±РµР· Р·Р°РїСѓСЃРєР° Whisper",
+        help="проверить сборку SRT/VTT без запуска Whisper",
     )
     return parser.parse_args(argv)
 
@@ -459,10 +459,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if args.self_test:
         return run_self_test()
     if not args.input:
-        print("РЈРєР°Р¶РёС‚Рµ С„Р°Р№Р». РџСЂРёРјРµСЂ: python transcribe_srt.py video.mp4 --lang ru", file=sys.stderr)
+        print("Укажите файл. Пример: python transcribe_srt.py video.mp4 --lang ru", file=sys.stderr)
         return 2
     if not os.path.isfile(args.input):
-        print(f"Р¤Р°Р№Р» РЅРµ РЅР°Р№РґРµРЅ: {args.input}", file=sys.stderr)
+        print(f"Файл не найден: {args.input}", file=sys.stderr)
         return 2
 
     ffmpeg = find_ffmpeg(args.ffmpeg)
@@ -474,14 +474,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     audio_path = os.path.join(temp_dir, "audio.wav")
 
     try:
-        print(f"[1/3] РР·РІР»РµРєР°СЋ Р·РІСѓРє: {args.input}")
+        print(f"[1/3] Извлекаю звук: {args.input}")
         extract_audio(ffmpeg, args.input, audio_path)
 
         backend = args.backend
         if backend == "auto":
             backend = "faster" if importlib.util.find_spec("faster_whisper") else "openai"
 
-        print(f"[2/3] Р Р°СЃРїРѕР·РЅР°СЋ ({backend}, РјРѕРґРµР»СЊ {args.model}, СЏР·С‹Рє {args.lang or 'Р°РІС‚Рѕ'})...")
+        print(f"[2/3] Распознаю ({backend}, модель {args.model}, язык {args.lang or 'авто'})...")
         if backend == "faster":
             words, language = transcribe_faster(
                 audio_path, args.model, args.lang, args.device, args.compute_type
@@ -491,10 +491,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 audio_path, args.model, args.lang, args.device
             )
         else:
-            raise RuntimeError(f"РќРµРёР·РІРµСЃС‚РЅС‹Р№ backend: {backend}")
+            raise RuntimeError(f"Неизвестный backend: {backend}")
 
         if not words:
-            raise RuntimeError("Р РµС‡СЊ РЅРµ СЂР°СЃРїРѕР·РЅР°РЅР°: РІ С„Р°Р№Р»Рµ РЅРµС‚ СЂРµС‡Рё РёР»Рё Р·РІСѓРє СЃР»РёС€РєРѕРј С‚РёС…РёР№.")
+            raise RuntimeError("Речь не распознана: в файле нет речи или звук слишком тихий.")
 
         cues = build_cues(
             words,
@@ -504,7 +504,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             min_duration=args.min_duration,
         )
         if not cues:
-            raise RuntimeError("РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР±СЂР°С‚СЊ СЂРµРїР»РёРєРё РґР»СЏ СЃСѓР±С‚РёС‚СЂРѕРІ.")
+            raise RuntimeError("Не удалось собрать реплики для субтитров.")
 
         formats = {item.strip().lower() for item in args.formats.split(",") if item.strip()}
         created = []
@@ -529,7 +529,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 write_text(srt_path, to_srt(cues, args.max_line), crlf=True)
                 created.append(srt_path)
             burned_path = args.burn_out or os.path.join(out_dir, base_name + "_subtitled.mp4")
-            print("[3/3] Р’Р¶РёРіР°СЋ СЃСѓР±С‚РёС‚СЂС‹...")
+            print("[3/3] Вжигаю субтитры...")
             burn_subtitles(
                 ffmpeg,
                 args.input,
@@ -540,15 +540,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             )
             created.append(burned_path)
 
-        print(f"РЇР·С‹Рє: {language}")
-        print(f"Р РµРїР»РёРє: {len(cues)}")
-        print("Р“РѕС‚РѕРІРѕ:")
+        print(f"Язык: {language}")
+        print(f"Реплик: {len(cues)}")
+        print("Готово:")
         for path in created:
             print(f"  {path}")
         return 0
     finally:
         if args.keep_audio:
-            print(f"Р’СЂРµРјРµРЅРЅС‹Р№ Р·РІСѓРє РѕСЃС‚Р°РІР»РµРЅ: {audio_path}")
+            print(f"Временный звук оставлен: {audio_path}")
         else:
             shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -557,8 +557,8 @@ if __name__ == "__main__":
     try:
         sys.exit(main())
     except KeyboardInterrupt:
-        print("РћСЃС‚Р°РЅРѕРІР»РµРЅРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј.", file=sys.stderr)
+        print("Остановлено пользователем.", file=sys.stderr)
         sys.exit(130)
     except Exception as error:  # noqa: BLE001
-        print(f"РћС€РёР±РєР°: {error}", file=sys.stderr)
+        print(f"Ошибка: {error}", file=sys.stderr)
         sys.exit(1)
