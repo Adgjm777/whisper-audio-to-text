@@ -19,13 +19,25 @@ ENV/
 Thumbs.db
 desktop.ini
 
-# Output files (не коммитим расшифровки)
+# Output files (РЅРµ РєРѕРјРјРёС‚РёРј СЂР°СЃС€РёС„СЂРѕРІРєРё Рё СЃСѓР±С‚РёС‚СЂС‹)
 *.txt
+!requirements.txt
+*.srt
+*.vtt
 
-# Models (не коммитим большие файлы Whisper)
+# РњРµРґРёР° (РЅРµ РєРѕРјРјРёС‚РёРј РёСЃС…РѕРґРЅРёРєРё)
+*.mp4
+*.mov
+*.mkv
+*.mp3
+*.wav
+*.m4a
+
+# Models (РЅРµ РєРѕРјРјРёС‚РёРј Р±РѕР»СЊС€РёРµ С„Р°Р№Р»С‹ Whisper)
 models/
 *.bin
 *.ggml
+*.pt
 
 # Local config
 config.ini
